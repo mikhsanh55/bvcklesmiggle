@@ -1,0 +1,57 @@
+# Bvcklesmiggle — Cursor project rules
+
+## Product context
+- Clothing brand website (Bvcklesmiggle): public catalog + content site, plus admin CMS.
+- Not an in-app payment/checkout app. Products sell via external marketplace links (Shopee / Tokopedia).
+- Public: home, articles (with comments), products catalog, partnerships, user register/login.
+- Admin (`/admin/*`, `is_admin=true`): CRUD for articles, products, partnerships, downloads, users.
+
+## Stack & versions (pin these)
+- PHP **8.3** (composer requires `^8.2`; runtime image uses 8.3)
+- Node.js **20** (Vite 5 requires `^18 || >=20`; project pins 20)
+- Laravel **11**, Blade + Vite + Tailwind CSS 3
+- MySQL / MariaDB in production (local `.env.example` defaults to sqlite — prefer MySQL for Dokploy)
+- Queue driver: `database` (see `QUEUE_CONNECTION`)
+
+## Deployment (Dokploy)
+- Build from root `Dockerfile` (multi-stage: Node build → Composer → PHP-FPM + Nginx).
+- Container entrypoint: `setup.sh` → migrate, storage:link, cache/optimize → Supervisor.
+- Supervisor runs: `php-fpm`, `nginx`, `php artisan queue:work database`.
+- Scheduler (`schedule:work`) is commented out in `docker/supervisord.conf` — only default `inspire` exists in `routes/console.php`. Enable when real schedules are added.
+- Required env: `APP_KEY`, `APP_URL`, `DB_*`, admin seed vars if used (`ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`).
+- Expose port **80**. Health check: `GET /up`.
+
+## Architecture conventions
+- Controllers live in `app/Http/Controllers/` (Admin* vs public). Prefer existing controller patterns over new service layers unless complexity warrants it.
+- Middleware aliases in `bootstrap/app.php`: `guest`, `only-admin`, `auth-admin`, `checkLaunchDate`.
+- Uploads use the `public` disk under `storage/app/public/` (`article_images/`, `product_images/`, `partnership_images/`). Always keep `php artisan storage:link`.
+- Sanitize rich text with `App\Support\HtmlSanitizer` — do not trust raw HTML from admin/editors.
+- Frontend assets: `resources/css`, `resources/js` → Vite → `public/build`. Do not hand-edit `public/build`.
+
+## Coding guidelines
+- Match existing Laravel 11 / Blade style; no unnecessary abstractions.
+- Keep marketplace links optional/nullable where migrations allow; do not invent payment gateway integrations unless explicitly requested.
+- Tests: PHPUnit Feature tests under `tests/Feature`. Prefer covering CRUD, auth guards, and XSS sanitization like existing suites.
+- Do not commit `.env`, secrets, or `vendor/` / `node_modules/`.
+- Prefer small, focused diffs. Do not rewrite unrelated admin UI or public marketing pages.
+
+## Common commands
+```bash
+composer install
+npm ci
+cp .env.example .env && php artisan key:generate
+php artisan migrate
+php artisan storage:link
+npm run build
+php artisan serve
+php artisan test
+```
+
+## Background workers
+| Process | Needed now? | Command |
+|---|---|---|
+| Queue worker | Yes (configured) | `php artisan queue:work database` |
+| Scheduler | No (only inspire) | `php artisan schedule:work` |
+| Horizon / Reverb / custom daemons | No | — |
+
+No `app/Jobs` classes exist yet; keep the queue worker running so future jobs work without redeploying process config.

@@ -1,0 +1,25 @@
+---
+description: Bvcklesmiggle project stack, product context, and Dokploy deployment conventions
+alwaysApply: true
+---
+
+# Bvcklesmiggle
+
+## Product
+- Clothing brand site: catalog + articles + partnerships + admin CMS.
+- No in-app payments; products link out to Shopee/Tokopedia.
+- Admin under `/admin/*` requires `is_admin=true`.
+
+## Versions
+- PHP 8.3 (composer `^8.2`)
+- Node.js 20 (Vite 5)
+- Laravel 11, Blade, Vite, Tailwind 3, MySQL in production
+
+## Deploy
+- Dokploy builds root `Dockerfile`. Entrypoint `setup.sh` runs migrate/optimize then Supervisor (php-fpm, nginx, queue:work).
+- Port 80, health `/up`. Set `APP_KEY` and `DB_*` in Dokploy env.
+
+## Code
+- Follow existing controller/middleware/Blade patterns.
+- Use `HtmlSanitizer` for rich text. Keep uploads on public disk + `storage:link`.
+- Do not add payment gateways, Horizon, or scheduler workers unless requested.
