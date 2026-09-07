@@ -13,8 +13,11 @@ mkdir -p \
 chown -R www-data:www-data storage bootstrap/cache || true
 chmod -R ug+rwx storage bootstrap/cache || true
 
-if [ -z "${APP_KEY:-}" ]; then
-  echo "[setup] WARNING: APP_KEY is empty. Set it in Dokploy env vars."
+if [ -z "${APP_KEY:-}" ] || [[ ! "${APP_KEY}" =~ ^base64: ]]; then
+  echo "[setup] ERROR: APP_KEY is missing or invalid."
+  echo "[setup] Generate one with: php -r \"echo 'base64:' . base64_encode(random_bytes(32)) . PHP_EOL;\""
+  echo "[setup] Then set APP_KEY=base64:... in Dokploy (do NOT use a random short string)."
+  exit 1
 fi
 
 echo "[setup] Clearing caches..."

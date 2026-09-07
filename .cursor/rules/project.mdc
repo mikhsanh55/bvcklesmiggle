@@ -16,8 +16,8 @@ alwaysApply: true
 - Laravel 11, Blade, Vite, Tailwind 3, MySQL in production
 
 ## Deploy
-- Dokploy builds root `Dockerfile`. Entrypoint `setup.sh` runs migrate/optimize then Supervisor (php-fpm, nginx, queue:work).
-- Port 80, health `/up`. Set `APP_KEY` and `DB_*` in Dokploy env.
+- Dokploy builds root `Dockerfile`. Entrypoint `setup.sh` runs migrate/optimize then php-fpm + nginx.
+- Port 80, health `/up`. Set `APP_KEY`, `DB_*`, and `APP_URL=https://your-domain` (or `FORCE_HTTPS=true`) so assets are not served as http behind TLS.
 
 ## Code
 - Follow existing controller/middleware/Blade patterns.

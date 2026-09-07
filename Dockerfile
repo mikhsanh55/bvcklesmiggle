@@ -87,6 +87,7 @@ COPY --from=frontend /app/public/build ./public/build
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Docker configs
+COPY docker/nginx-map.conf /etc/nginx/conf.d/00-forwarded-proto.conf
 COPY docker/nginx.conf /etc/nginx/sites-available/default
 RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
