@@ -28,6 +28,13 @@ RUN npm run build
 # -----------------------------------------------------------------------------
 FROM php:${PHP_VERSION}-cli-bookworm AS vendor
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        unzip \
+        libzip-dev \
+    && docker-php-ext-install zip \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
@@ -38,7 +45,8 @@ RUN composer install \
     --no-interaction \
     --no-scripts \
     --prefer-dist \
-    --optimize-autoloader
+    --optimize-autoloader \
+    --ignore-platform-reqs
 
 # -----------------------------------------------------------------------------
 # Stage 3: Runtime (Nginx + PHP-FPM + Supervisor)
